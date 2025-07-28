@@ -4,6 +4,47 @@ linking to external resources instead of including content in-line.
 See 'release/text/readme.html' for the end user read-me.
 -->
 
+Goo Engine 3.6.23
+==========
+
+Even though Blender 3.6 LTS has reached its end-of-life, many people still depend on 3.6.
+
+I need 3.6 specifically for MMD Tools & UuuNyaa Tools, and plan to use 3.6 long after the EOL, so I patched Goo Engine 3.6 with fixes from Official 3.6 LTS branch.
+
+## Building for macOS
+I don't use Blender on Windows / Linux, so I cannot test it. But you can still build it yourself. [You can learn how to build Blender here.](https://developer.blender.org/docs/handbook/building_blender/)
+
+**Attention!! You have to use OpenGL backend to use Goo Engine on macOS**
+
+You need Xcode 15.4 to build Blender 3.6. Xcode 15.4 won't launch in Sequoia, but that's fine.
+Xcode 16.3+ won't do it because it comes with Clang 17.
+
+1. Remove current Command Line Tools:
+```bash
+sudo rm -rf /Library/Developer/CommandLineTools
+```
+
+2. Install Command Line Tools 16.2, and Xcode 15.4. CLT is for good measure.
+Get them from https://developer.apple.com/download/all/ (you need Apple Account)
+
+3. run this command.
+```bash
+sudo xcode-select -s /Library/Developer/CommandLineTools
+```
+
+4. after that:
+```bash
+mkdir ~/blender-git
+cd ~/blender-git
+git clone -b merge-blender-v3.6 https://github.com/ulyssas/goo-engine.git
+cd goo-engine
+make update
+make
+```
+
+Then, you should get `Blender.app` in `~/blender-git/build_darwin/bin`.
+
+
 Goo Engine
 ==========
 
