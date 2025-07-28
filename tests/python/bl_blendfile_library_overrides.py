@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # ./blender.bin --background -noaudio --python tests/python/bl_blendfile_library_overrides.py -- --output-dir=/tmp/
-import pathlib
-import bpy
-import sys
 import os
+import pathlib
+import sys
 import unittest
+
+import bpy
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from bl_blendfile_utils import TestHelper
@@ -29,28 +30,38 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
 
         bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
         mesh = bpy.data.meshes.new(TestLibraryOverrides.MESH_LIBRARY_PARENT)
-        obj = bpy.data.objects.new(TestLibraryOverrides.OBJECT_LIBRARY_PARENT, object_data=mesh)
+        obj = bpy.data.objects.new(
+            TestLibraryOverrides.OBJECT_LIBRARY_PARENT, object_data=mesh
+        )
         bpy.context.collection.objects.link(obj)
         mesh_child = bpy.data.meshes.new(TestLibraryOverrides.MESH_LIBRARY_CHILD)
-        obj_child = bpy.data.objects.new(TestLibraryOverrides.OBJECT_LIBRARY_CHILD, object_data=mesh_child)
+        obj_child = bpy.data.objects.new(
+            TestLibraryOverrides.OBJECT_LIBRARY_CHILD, object_data=mesh_child
+        )
         obj_child.parent = obj
         bpy.context.collection.objects.link(obj_child)
 
         mesh = bpy.data.meshes.new(TestLibraryOverrides.MESH_LIBRARY_PERMISSIVE)
-        obj = bpy.data.objects.new(TestLibraryOverrides.OBJECT_LIBRARY_PERMISSIVE, object_data=mesh)
+        obj = bpy.data.objects.new(
+            TestLibraryOverrides.OBJECT_LIBRARY_PERMISSIVE, object_data=mesh
+        )
         bpy.context.collection.objects.link(obj)
         obj.override_template_create()
-        prop = obj.override_library.properties.add(rna_path='scale')
-        prop.operations.add(operation='NOOP')
+        prop = obj.override_library.properties.add(rna_path="scale")
+        prop.operations.add(operation="NOOP")
 
-        bpy.ops.wm.save_as_mainfile(filepath=str(self.output_path), check_existing=False, compress=False)
+        bpy.ops.wm.save_as_mainfile(
+            filepath=str(self.output_path), check_existing=False, compress=False
+        )
 
     def test_link_and_override_property(self):
         bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
         bpy.data.orphans_purge()
 
         link_dir = self.output_path / "Object"
-        bpy.ops.wm.link(directory=str(link_dir), filename=TestLibraryOverrides.OBJECT_LIBRARY_PARENT)
+        bpy.ops.wm.link(
+            directory=str(link_dir), filename=TestLibraryOverrides.OBJECT_LIBRARY_PARENT
+        )
 
         obj = bpy.data.objects[TestLibraryOverrides.OBJECT_LIBRARY_PARENT]
         self.assertIsNone(obj.override_library)
@@ -67,7 +78,7 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
         assert override_prop.rna_path == "location"
         assert len(override_prop.operations) == 1
         override_operation = override_prop.operations[0]
-        assert override_operation.operation == 'REPLACE'
+        assert override_operation.operation == "REPLACE"
         # Setting location.y overrode all elements in the location array. -1 is a wildcard.
         assert override_operation.subitem_local_index == -1
 
@@ -77,15 +88,17 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
         assert local_id.location == local_id.override_library.reference.location
 
         # #### Generate an override property & operation manually using the API.
-        override_property = local_id.override_library.properties.add(rna_path="location")
-        override_property.operations.add(operation='REPLACE')
+        override_property = local_id.override_library.properties.add(
+            rna_path="location"
+        )
+        override_property.operations.add(operation="REPLACE")
 
         assert len(local_id.override_library.properties) == 1
         override_prop = local_id.override_library.properties[0]
         assert override_prop.rna_path == "location"
         assert len(override_prop.operations) == 1
         override_operation = override_prop.operations[0]
-        assert override_operation.operation == 'REPLACE'
+        assert override_operation.operation == "REPLACE"
         # Setting location.y overrode all elements in the location array. -1 is a wildcard.
         assert override_operation.subitem_local_index == -1
 
@@ -112,7 +125,10 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
         bpy.data.orphans_purge()
 
         link_dir = self.output_path / "Object"
-        bpy.ops.wm.link(directory=str(link_dir), filename=TestLibraryOverrides.OBJECT_LIBRARY_PERMISSIVE)
+        bpy.ops.wm.link(
+            directory=str(link_dir),
+            filename=TestLibraryOverrides.OBJECT_LIBRARY_PERMISSIVE,
+        )
 
         obj = bpy.data.objects[TestLibraryOverrides.OBJECT_LIBRARY_PERMISSIVE]
         self.assertIsNotNone(obj.override_library)
@@ -124,7 +140,7 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
         assert override_prop.rna_path == "scale"
         assert len(override_prop.operations) == 1
         override_operation = override_prop.operations[0]
-        assert override_operation.operation == 'NOOP'
+        assert override_operation.operation == "NOOP"
         assert override_operation.subitem_local_index == -1
         local_id.location.y = 1.0
         local_id.scale.x = 0.5
@@ -143,14 +159,14 @@ class TestLibraryOverrides(TestHelper, unittest.TestCase):
         assert override_prop.rna_path == "scale"
         assert len(override_prop.operations) == 1
         override_operation = override_prop.operations[0]
-        assert override_operation.operation == 'NOOP'
+        assert override_operation.operation == "NOOP"
         assert override_operation.subitem_local_index == -1
 
         override_prop = local_id.override_library.properties[1]
         assert override_prop.rna_path == "location"
         assert len(override_prop.operations) == 1
         override_operation = override_prop.operations[0]
-        assert override_operation.operation == 'REPLACE'
+        assert override_operation.operation == "REPLACE"
         assert override_operation.subitem_local_index == -1
 
 
@@ -167,18 +183,20 @@ class TestLibraryTemplate(TestHelper, unittest.TestCase):
         """
         bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
         mesh = bpy.data.meshes.new(TestLibraryTemplate.MESH_LIBRARY_PERMISSIVE)
-        obj = bpy.data.objects.new(TestLibraryTemplate.OBJECT_LIBRARY_PERMISSIVE, object_data=mesh)
+        obj = bpy.data.objects.new(
+            TestLibraryTemplate.OBJECT_LIBRARY_PERMISSIVE, object_data=mesh
+        )
         bpy.context.collection.objects.link(obj)
         assert obj.override_library is None
         obj.override_template_create()
         assert obj.override_library is not None
         assert len(obj.override_library.properties) == 0
-        prop = obj.override_library.properties.add(rna_path='scale')
+        prop = obj.override_library.properties.add(rna_path="scale")
         assert len(obj.override_library.properties) == 1
         assert len(prop.operations) == 0
-        operation = prop.operations.add(operation='NOOP')
+        operation = prop.operations.add(operation="NOOP")
         assert len(prop.operations) == 1
-        assert operation.operation == 'NOOP'
+        assert operation.operation == "NOOP"
 
 
 class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
@@ -202,7 +220,9 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         self.ensure_path(str(output_dir))
         self.lib_output_path = output_dir / "blendlib_overrides_lib.blend"
         self.test_output_path = output_dir / "blendlib_overrides_test.blend"
-        self.test_output_path_recursive = output_dir / "blendlib_overrides_test_recursive.blend"
+        self.test_output_path_recursive = (
+            output_dir / "blendlib_overrides_test_recursive.blend"
+        )
 
     def reset(self):
         bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
@@ -210,32 +230,44 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
     def init_lib_data(self, custom_cb=None):
         self.reset()
 
-        collection_container = bpy.data.collections.new(self.__class__.DATA_NAME_CONTAINER)
+        collection_container = bpy.data.collections.new(
+            self.__class__.DATA_NAME_CONTAINER
+        )
         bpy.context.collection.children.link(collection_container)
 
         mesh = bpy.data.meshes.new(self.__class__.DATA_NAME_RIGGED)
-        obj_child = bpy.data.objects.new(self.__class__.DATA_NAME_RIGGED, object_data=mesh)
+        obj_child = bpy.data.objects.new(
+            self.__class__.DATA_NAME_RIGGED, object_data=mesh
+        )
         collection_container.objects.link(obj_child)
         armature = bpy.data.armatures.new(self.__class__.DATA_NAME_RIG)
-        obj_armature = bpy.data.objects.new(self.__class__.DATA_NAME_RIG, object_data=armature)
+        obj_armature = bpy.data.objects.new(
+            self.__class__.DATA_NAME_RIG, object_data=armature
+        )
         obj_child.parent = obj_armature
         collection_container.objects.link(obj_armature)
 
-        obj_child_modifier = obj_child.modifiers.new("", 'ARMATURE')
+        obj_child_modifier = obj_child.modifiers.new("", "ARMATURE")
         obj_child_modifier.object = obj_armature
 
-        obj_ctrl1 = bpy.data.objects.new(self.__class__.DATA_NAME_CONTROLLER_1, object_data=None)
+        obj_ctrl1 = bpy.data.objects.new(
+            self.__class__.DATA_NAME_CONTROLLER_1, object_data=None
+        )
         collection_container.objects.link(obj_ctrl1)
 
-        obj_armature_constraint = obj_armature.constraints.new('COPY_LOCATION')
+        obj_armature_constraint = obj_armature.constraints.new("COPY_LOCATION")
         obj_armature_constraint.target = obj_ctrl1
 
         collection_sub = bpy.data.collections.new(self.__class__.DATA_NAME_CONTROLLER_2)
         collection_container.children.link(collection_sub)
-        obj_ctrl2 = bpy.data.objects.new(self.__class__.DATA_NAME_CONTROLLER_2, object_data=None)
+        obj_ctrl2 = bpy.data.objects.new(
+            self.__class__.DATA_NAME_CONTROLLER_2, object_data=None
+        )
         collection_sub.objects.link(obj_ctrl2)
 
-        collection_sub = bpy.data.collections.new(self.__class__.DATA_NAME_SAMENAME_CONTAINER)
+        collection_sub = bpy.data.collections.new(
+            self.__class__.DATA_NAME_SAMENAME_CONTAINER
+        )
         collection_container.children.link(collection_sub)
         # 'Samename' objects are purposedly not added to the collection here.
 
@@ -268,7 +300,9 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             relative_path=False,
         )
 
-        linked_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        linked_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
 
         assert linked_collection_container.library is not None
         assert linked_collection_container.override_library is None
@@ -283,7 +317,9 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
 
         return linked_collection_container
 
-    def link_liboverride_data(self, num_collections, num_objects, num_meshes, num_armatures):
+    def link_liboverride_data(
+        self, num_collections, num_objects, num_meshes, num_armatures
+    ):
         link_dir = self.test_output_path / "Collection"
         bpy.ops.wm.link(
             directory=str(link_dir),
@@ -292,7 +328,9 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             relative_path=False,
         )
 
-        linked_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)]
+        linked_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)
+        ]
         assert linked_collection_container.library is not None
         assert linked_collection_container.override_library is not None
         assert len(bpy.data.collections) == num_collections
@@ -316,7 +354,7 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             assert id_.override_library.hierarchy_root == id_root
             for op in id_.override_library.properties:
                 for opop in op.operations:
-                    assert 'IDPOINTER_MATCH_REFERENCE' in opop.flag
+                    assert "IDPOINTER_MATCH_REFERENCE" in opop.flag
 
         for coll_ in root_collection.children_recursive:
             liboverride_systemoverrideonly_hierarchy_validate(coll_, root_collection)
@@ -332,20 +370,29 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 3,
             num_objects=0 + 4,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_container = linked_collection_container.override_hierarchy_create(
-            bpy.context.scene,
-            bpy.context.view_layer,
+        override_collection_container = (
+            linked_collection_container.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer,
+            )
         )
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -365,7 +412,8 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 5,
             num_objects=0 + 8,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
         bpy.ops.wm.save_as_mainfile(
             filepath=str(self.test_output_path_recursive),
@@ -382,25 +430,37 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
         obj_armature_constraint.target = obj_ctrl2
 
-        bpy.ops.wm.save_as_mainfile(filepath=str(self.lib_output_path), check_existing=False, compress=False)
+        bpy.ops.wm.save_as_mainfile(
+            filepath=str(self.lib_output_path), check_existing=False, compress=False
+        )
 
         # Re-open the main file, and check that automatic resync did its work correctly, remapping the target of the
         # armature constraint to controller 2, without creating unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         assert len(bpy.data.collections) == 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
         obj_armature = bpy.data.objects[self.__class__.DATA_NAME_RIG]
         obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
-        assert obj_armature.library is None and obj_armature.override_library is not None
+        assert (
+            obj_armature.library is None and obj_armature.override_library is not None
+        )
         assert obj_ctrl2.library is None and obj_ctrl2.override_library is not None
         assert obj_armature.constraints[0].target == obj_ctrl2
 
@@ -411,19 +471,33 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path_recursive))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)
+        ]
         assert override_collection_container.library is not None
         assert override_collection_container.override_library is not None
         test_output_path_lib = override_collection_container.library
         assert len(bpy.data.collections) == 0 + 5
-        assert all((id_.override_library is not None) for id_ in bpy.data.collections if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.collections
+            if id_.library == test_output_path_lib
+        )
         assert len(bpy.data.objects) == 0 + 8
-        assert all((id_.override_library is not None) for id_ in bpy.data.objects if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.objects
+            if id_.library == test_output_path_lib
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
-        obj_armature = bpy.data.objects[self.__class__.DATA_NAME_RIG, str(self.test_output_path)]
-        obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2, str(self.test_output_path)]
+        obj_armature = bpy.data.objects[
+            self.__class__.DATA_NAME_RIG, str(self.test_output_path)
+        ]
+        obj_ctrl2 = bpy.data.objects[
+            self.__class__.DATA_NAME_CONTROLLER_2, str(self.test_output_path)
+        ]
         assert obj_armature.override_library is not None
         assert obj_ctrl2.override_library is not None
         assert obj_armature.constraints[0].target == obj_ctrl2
@@ -439,12 +513,16 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 3,
             num_objects=0 + 4,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_containers = [linked_collection_container.override_hierarchy_create(
+        override_collection_containers = [
+            linked_collection_container.override_hierarchy_create(
                 bpy.context.scene,
                 bpy.context.view_layer,
-            ) for i in range(3)]
+            )
+            for i in range(3)
+        ]
         for override_container in override_collection_containers:
             assert override_container.library is None
             assert override_container.override_library is not None
@@ -453,9 +531,15 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 * 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:3 * 2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[: 3 * 2]
+        )
         assert len(bpy.data.objects) == 3 * 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:3 * 4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[: 3 * 4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -473,7 +557,8 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 5,
             num_objects=0 + 8,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
         bpy.ops.wm.save_as_mainfile(
             filepath=str(self.test_output_path_recursive),
@@ -488,26 +573,37 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             obj_armature_constraint = obj_armature.constraints[0]
             obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
             obj_armature_constraint.target = obj_ctrl2
+
         self.edit_lib_data(edit_lib_cb)
 
         # Re-open the main file, and check that automatic resync did its work correctly, remapping the target of the
         # armature constraint to controller 2, without creating unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 * 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:3 * 2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[: 3 * 2]
+        )
         assert len(bpy.data.objects) == 3 * 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:3 * 4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[: 3 * 4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
         obj_armature = bpy.data.objects[self.__class__.DATA_NAME_RIG]
         obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
-        assert obj_armature.library is None and obj_armature.override_library is not None
+        assert (
+            obj_armature.library is None and obj_armature.override_library is not None
+        )
         assert obj_ctrl2.library is None and obj_ctrl2.override_library is not None
         assert obj_armature.constraints[0].target == obj_ctrl2
 
@@ -526,20 +622,34 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path_recursive))
 
-        linked_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)]
+        linked_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)
+        ]
         assert linked_collection_container.library is not None
         assert linked_collection_container.override_library is not None
         test_output_path_lib = linked_collection_container.library
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 0 + 5
-        assert all((id_.override_library is not None) for id_ in bpy.data.collections if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.collections
+            if id_.library == test_output_path_lib
+        )
         assert len(bpy.data.objects) == 0 + 8
-        assert all((id_.override_library is not None) for id_ in bpy.data.objects if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.objects
+            if id_.library == test_output_path_lib
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
-        obj_armature = bpy.data.objects[self.__class__.DATA_NAME_RIG, str(self.test_output_path)]
-        obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2, str(self.test_output_path)]
+        obj_armature = bpy.data.objects[
+            self.__class__.DATA_NAME_RIG, str(self.test_output_path)
+        ]
+        obj_ctrl2 = bpy.data.objects[
+            self.__class__.DATA_NAME_CONTROLLER_2, str(self.test_output_path)
+        ]
         assert obj_armature.override_library is not None
         assert obj_ctrl2.override_library is not None
         assert obj_armature.constraints[0].target == obj_ctrl2
@@ -555,11 +665,14 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 3,
             num_objects=0 + 4,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_container = linked_collection_container.override_hierarchy_create(
-            bpy.context.scene,
-            bpy.context.view_layer,
+        override_collection_container = (
+            linked_collection_container.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer,
+            )
         )
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
@@ -567,9 +680,15 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -589,11 +708,14 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 5,
             num_objects=0 + 8,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_container = linked_collection_container.override_hierarchy_create(
-            bpy.context.scene,
-            bpy.context.view_layer,
+        override_collection_container = (
+            linked_collection_container.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer,
+            )
         )
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
@@ -601,9 +723,15 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 2 + 5
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 8
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -624,26 +752,38 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
         obj_armature_constraint.target = obj_ctrl2
 
-        bpy.ops.wm.save_as_mainfile(filepath=str(self.lib_output_path), check_existing=False, compress=False)
+        bpy.ops.wm.save_as_mainfile(
+            filepath=str(self.lib_output_path), check_existing=False, compress=False
+        )
 
         # Re-open the main file, and check that automatic resync did its work correctly, remapping the target of the
         # armature constraint to controller 2, without creating unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 2 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 4
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
         obj_armature = bpy.data.objects[self.__class__.DATA_NAME_RIG]
         obj_ctrl2 = bpy.data.objects[self.__class__.DATA_NAME_CONTROLLER_2]
-        assert obj_armature.library is None and obj_armature.override_library is not None
+        assert (
+            obj_armature.library is None and obj_armature.override_library is not None
+        )
         assert obj_ctrl2.library is None and obj_ctrl2.override_library is not None
         assert obj_armature.constraints[0].target == obj_ctrl2
 
@@ -654,14 +794,22 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path_recursive))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 2 + 5
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:2])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:2]
+        )
         assert len(bpy.data.objects) == 4 + 8
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:4])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:4]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -676,11 +824,18 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
     def test_link_and_override_idnames_conflict(self):
         def init_lib_cb(self):
             # Add some 'samename' objects to the library.
-            collection_sub = bpy.data.collections[self.__class__.DATA_NAME_SAMENAME_CONTAINER]
-            obj_samename_0 = bpy.data.objects.new(self.__class__.DATA_NAME_SAMENAME_0, object_data=None)
+            collection_sub = bpy.data.collections[
+                self.__class__.DATA_NAME_SAMENAME_CONTAINER
+            ]
+            obj_samename_0 = bpy.data.objects.new(
+                self.__class__.DATA_NAME_SAMENAME_0, object_data=None
+            )
             collection_sub.objects.link(obj_samename_0)
-            obj_samename_3 = bpy.data.objects.new(self.__class__.DATA_NAME_SAMENAME_3, object_data=None)
+            obj_samename_3 = bpy.data.objects.new(
+                self.__class__.DATA_NAME_SAMENAME_3, object_data=None
+            )
             collection_sub.objects.link(obj_samename_3)
+
         self.init_lib_data(init_lib_cb)
         self.reset()
 
@@ -689,12 +844,16 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 3,
             num_objects=0 + 6,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_containers = [linked_collection_container.override_hierarchy_create(
+        override_collection_containers = [
+            linked_collection_container.override_hierarchy_create(
                 bpy.context.scene,
                 bpy.context.view_layer,
-            ) for i in range(3)]
+            )
+            for i in range(3)
+        ]
         for override_container in override_collection_containers:
             assert override_container.library is None
             assert override_container.override_library is not None
@@ -703,17 +862,32 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 * 3 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:3 * 3])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[: 3 * 3]
+        )
         assert len(bpy.data.objects) == 3 * 6 + 6
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:3 * 6])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[: 3 * 6]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
-        bpy.data.objects[self.__class__.DATA_NAME_SAMENAME_0].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_0
-        bpy.data.objects[self.__class__.DATA_NAME_SAMENAME_3].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_3
-        # These names will be used by the second created liboverride, due to how naming is currently handled when original name is already used.
-        bpy.data.objects[self.__class__.DATA_NAME_SAMENAME_1].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_0
-        bpy.data.objects[self.__class__.DATA_NAME_SAMENAME_2].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_3
+        bpy.data.objects[
+            self.__class__.DATA_NAME_SAMENAME_0
+        ].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_0
+        bpy.data.objects[
+            self.__class__.DATA_NAME_SAMENAME_3
+        ].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_3
+        # These names will be used by the second created liboverride, due to how
+        # naming is currently handled when original name is already used.
+        bpy.data.objects[
+            self.__class__.DATA_NAME_SAMENAME_1
+        ].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_0
+        bpy.data.objects[
+            self.__class__.DATA_NAME_SAMENAME_2
+        ].override_library.reference.name == self.__class__.DATA_NAME_SAMENAME_3
 
         bpy.ops.wm.save_as_mainfile(
             filepath=str(self.test_output_path),
@@ -729,11 +903,14 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             num_collections=0 + 6,
             num_objects=0 + 12,
             num_meshes=0 + 1,
-            num_armatures=0 + 1)
+            num_armatures=0 + 1,
+        )
 
-        override_collection_container = linked_collection_container.override_hierarchy_create(
-            bpy.context.scene,
-            bpy.context.view_layer,
+        override_collection_container = (
+            linked_collection_container.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer,
+            )
         )
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
@@ -741,9 +918,15 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # Objects and collections are duplicated as overrides (except for empty collection),
         # but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 + 6
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:3])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[:3]
+        )
         assert len(bpy.data.objects) == 6 + 12
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:6])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[:6]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -762,22 +945,31 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
             obj_samename_3 = bpy.data.objects[self.__class__.DATA_NAME_SAMENAME_3]
             obj_samename_0.name = self.__class__.DATA_NAME_SAMENAME_2
             obj_samename_3.name = self.__class__.DATA_NAME_SAMENAME_1
+
         self.edit_lib_data(edit_lib_cb)
 
         # Re-open the main file, and check that automatic resync did its work correctly, remapping the target of the
         # armature constraint to controller 2, without creating unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path))
 
-        override_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER]
+        override_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER
+        ]
         assert override_collection_container.library is None
         assert override_collection_container.override_library is not None
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 * 3 + 3
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.collections[:3 * 3])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.collections[: 3 * 3]
+        )
         # Note that the 'missing' renamed objects from the library are still here as empty placeholders,
         # hence the 8 linked ones instead of 6.
         assert len(bpy.data.objects) == 3 * 6 + 8
-        assert all((id_.library is None and id_.override_library is not None) for id_ in bpy.data.objects[:3 * 6])
+        assert all(
+            (id_.library is None and id_.override_library is not None)
+            for id_ in bpy.data.objects[: 3 * 6]
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -796,18 +988,28 @@ class TestLibraryOverridesComplex(TestHelper, unittest.TestCase):
         # unexpected garbage IDs along the line.
         bpy.ops.wm.open_mainfile(filepath=str(self.test_output_path_recursive))
 
-        linked_collection_container = bpy.data.collections[self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)]
+        linked_collection_container = bpy.data.collections[
+            self.__class__.DATA_NAME_CONTAINER, str(self.test_output_path)
+        ]
         assert linked_collection_container.library is not None
         assert linked_collection_container.override_library is not None
 
         test_output_path_lib = linked_collection_container.library
         # Objects and collections are duplicated as overrides, but meshes and armatures remain only linked data.
         assert len(bpy.data.collections) == 3 + 6
-        assert all((id_.override_library is not None) for id_ in bpy.data.collections if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.collections
+            if id_.library == test_output_path_lib
+        )
         # Note that the 'missing' renamed objects from the library are still here as empty placeholders,
         # hence the 8 + 6 linked ones instead of 6 + 6.
         assert len(bpy.data.objects) == 6 + 14
-        assert all((id_.override_library is not None) for id_ in bpy.data.objects if id_.library == test_output_path_lib)
+        assert all(
+            (id_.override_library is not None)
+            for id_ in bpy.data.objects
+            if id_.library == test_output_path_lib
+        )
         assert len(bpy.data.meshes) == 0 + 1
         assert len(bpy.data.armatures) == 0 + 1
 
@@ -824,8 +1026,9 @@ class TestLibraryOverridesFromProxies(TestHelper, unittest.TestCase):
         self.args = args
 
         self.test_dir = pathlib.Path(self.args.test_dir)
-        self.assertTrue(self.test_dir.exists(),
-                        'Test dir {0} should exist'.format(self.test_dir))
+        self.assertTrue(
+            self.test_dir.exists(), "Test dir {0} should exist".format(self.test_dir)
+        )
 
         bpy.ops.wm.read_homefile(use_empty=True, use_factory_startup=True)
 
@@ -834,10 +1037,16 @@ class TestLibraryOverridesFromProxies(TestHelper, unittest.TestCase):
 
         # Check stability of 'same name' fixing for IDs.
         direct_linked_A = bpy.data.libraries["lib.002"]
-        assert direct_linked_A.filepath == os.path.join("//libraries", "direct_linked_A.blend")
+        assert direct_linked_A.filepath == os.path.join(
+            "//libraries", "direct_linked_A.blend"
+        )
 
-        assert bpy.data.objects['HairCubeArmatureGroup_proxy'].library == direct_linked_A
-        assert bpy.data.objects['HairCubeArmatureGroup_proxy'].override_library is not None
+        assert (
+            bpy.data.objects["HairCubeArmatureGroup_proxy"].library == direct_linked_A
+        )
+        assert (
+            bpy.data.objects["HairCubeArmatureGroup_proxy"].override_library is not None
+        )
 
 
 TESTS = (
@@ -876,15 +1085,18 @@ def main():
     args = argparse_create().parse_args()
 
     # Don't write thumbnails into the home directory.
-    bpy.context.preferences.filepaths.file_preview_type = 'NONE'
+    bpy.context.preferences.filepaths.file_preview_type = "NONE"
     bpy.context.preferences.experimental.use_override_templates = True
 
     for Test in TESTS:
         Test(args).run_all_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
-    sys.argv = [__file__] + \
-        (sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
+
+    sys.argv = [__file__] + (
+        sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    )
+    main()
     main()

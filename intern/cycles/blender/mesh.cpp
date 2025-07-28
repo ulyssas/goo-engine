@@ -345,6 +345,9 @@ static void attr_create_motion(Mesh *mesh, BL::Attribute &b_attribute, const flo
   BL::FloatVectorAttribute b_vector_attribute(b_attribute);
   const int numverts = mesh->get_verts().size();
 
+  /* Override motion steps to fixed number. */
+  mesh->set_motion_steps(3);
+
   /* Find or add attribute */
   float3 *P = &mesh->get_verts()[0];
   Attribute *attr_mP = mesh->attributes.find(ATTR_STD_MOTION_VERTEX_POSITION);
@@ -1282,10 +1285,12 @@ void BlenderSync::sync_mesh(BL::Depsgraph b_depsgraph, BObjectInfo &b_ob_info, M
   if (view_layer.use_surfaces) {
     /* Adaptive subdivision setup. Not for baking since that requires
      * exact mapping to the Blender mesh. */
-    if (!scene->bake_manager->get_baking()) {
-      new_mesh.set_subdivision_type(
-          object_subdivision_type(b_ob_info.real_object, preview, experimental));
-    }
+    Mesh::SubdivisionType subdivision_type = (b_ob_info.real_object != b_bake_target) ?
+                                                 object_subdivision_type(b_ob_info.real_object,
+                                                                         preview,
+                                                                         experimental) :
+                                                 Mesh::SUBDIVISION_NONE;
+    new_mesh.set_subdivision_type(subdivision_type);
 
     /* For some reason, meshes do not need this... */
     bool need_undeformed = new_mesh.need_attribute(scene, ATTR_STD_GENERATED);

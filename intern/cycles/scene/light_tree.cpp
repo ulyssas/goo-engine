@@ -106,7 +106,9 @@ LightTreeEmitter::LightTreeEmitter(Scene *scene,
 
     /* TODO: need a better way to handle this when textures are used. */
     float area = triangle_area(vertices[0], vertices[1], vertices[2]);
-    measure.energy = area * average(shader->emission_estimate);
+    /* Use absolute value of emission_estimate so lights with negative strength are properly
+     * supported in the light tree. */
+    measure.energy = area * average(fabs(shader->emission_estimate));
 
     /* NOTE: the original implementation used the bounding box centroid, but triangle centroid
      * seems to work fine */
@@ -179,13 +181,23 @@ LightTreeEmitter::LightTreeEmitter(Scene *scene,
     else if (type == LIGHT_SPOT) {
       measure.bcone.theta_o = 0;
 
-      const float unscaled_theta_e = lamp->get_spot_angle() * 0.5f;
+      float theta_e = min(lamp->get_spot_angle() * 0.5f, M_PI_2_F);
       const float len_u = len(lamp->get_axisu());
       const float len_v = len(lamp->get_axisv());
       const float len_w = len(lamp->get_dir());
 
-      measure.bcone.theta_e = fast_atanf(fast_tanf(unscaled_theta_e) * fmaxf(len_u, len_v) /
-                                         len_w);
+      /* As theta_e approaches pi/2, the behaviour of atan(tan(theta_e)) can become quite
+       * unpredicatable as tan(x) has a asymptote at x = pi/2. To avoid this, we skip the back and
+       * forward conversion. The conversion is required to deal with scaled lights. Since we are no
+       * longer taking that into consideration in this situation, theta_e may end up being larger
+       * than what is ideal, resulting in increase nosie. */
+      if (fabsf(M_PI_2_F - theta_e) < 1e-6f) {
+        theta_e = M_PI_2_F;
+      }
+      else {
+        theta_e = fast_atanf(fast_tanf(theta_e) * fmaxf(len_u, len_v) / len_w);
+      }
+      measure.bcone.theta_e = theta_e;
 
       /* Point and spot lights can emit light from any point within its radius. */
       const float3 radius = make_float3(size);
@@ -215,7 +227,7 @@ LightTreeEmitter::LightTreeEmitter(Scene *scene,
 
     /* Use absolute value of energy so lights with negative strength are properly supported in the
      * light tree. */
-    measure.energy = fabsf(average(strength));
+    measure.energy = average(fabs(strength));
   }
 }
 

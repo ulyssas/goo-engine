@@ -42,6 +42,7 @@
 
 #include "ED_armature.h"
 #include "ED_gpencil_legacy.h"
+#include "ED_outliner.h"
 #include "ED_screen.h"
 #include "ED_transform_snap_object_context.h"
 #include "ED_undo.h"

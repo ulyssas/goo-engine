@@ -560,7 +560,7 @@ static SnapObjectHitDepth *hit_depth_create(const float depth,
   hit->index = index;
 
   hit->ob_eval = ob_eval;
-  copy_m4_m4(hit->obmat, (float(*)[4])obmat);
+  copy_m4_m4(hit->obmat, (float (*)[4])obmat);
   hit->ob_uuid = ob_uuid;
 
   return hit;
@@ -592,7 +592,7 @@ static void raycast_all_cb(void *userdata, int index, const BVHTreeRay *ray, BVH
     float depth;
 
     /* World-space location. */
-    mul_v3_m4v3(location, (float(*)[4])data->obmat, hit->co);
+    mul_v3_m4v3(location, (float (*)[4])data->obmat, hit->co);
     depth = (hit->dist + data->len_diff) / data->local_scale;
 
     /* World-space normal. */
@@ -620,7 +620,7 @@ static void mesh_looptri_raycast_backface_culling_cb(void *userdata,
                                                      BVHTreeRayHit *hit)
 {
   const BVHTreeFromMesh *data = (BVHTreeFromMesh *)userdata;
-  const float(*vert_positions)[3] = data->vert_positions;
+  const float (*vert_positions)[3] = data->vert_positions;
   const MLoopTri *lt = &data->looptri[index];
   const float *vtri_co[3] = {
       vert_positions[data->corner_verts[lt->tri[0]]],
@@ -2233,7 +2233,7 @@ static eSnapMode snapCurve(SnapObjectContext *sctx,
   float tobmat[4][4];
   transpose_m4_m4(tobmat, obmat);
 
-  float(*clip_planes)[4] = sctx->runtime.clip_plane;
+  float (*clip_planes)[4] = sctx->runtime.clip_plane;
   int clip_plane_len = sctx->runtime.clip_plane_len;
 
   if (sctx->runtime.has_occlusion_plane) {
@@ -2265,38 +2265,38 @@ static eSnapMode snapCurve(SnapObjectContext *sctx,
           }
 
           /* Don't snap if handle is selected (moving),
-            * or if it is aligning to a moving handle. */
+           * or if it is aligning to a moving handle. */
           bool is_selected_h1 = (nu->bezt[u].f1 & SELECT) != 0;
           bool is_selected_h2 = (nu->bezt[u].f3 & SELECT) != 0;
           bool is_autoalign_h1 = (nu->bezt[u].h1 & HD_ALIGN) != 0;
           bool is_autoalign_h2 = (nu->bezt[u].h2 & HD_ALIGN) != 0;
           if (!skip_selected || !(is_selected_h1 || (is_autoalign_h1 && is_selected_h2))) {
             has_snap |= test_projected_vert_dist(&neasrest_precalc,
-                                                  clip_planes_local,
-                                                  clip_plane_len,
-                                                  is_persp,
-                                                  nu->bezt[u].vec[0],
-                                                  &dist_px_sq,
-                                                  r_loc);
+                                                 clip_planes_local,
+                                                 clip_plane_len,
+                                                 is_persp,
+                                                 nu->bezt[u].vec[0],
+                                                 &dist_px_sq,
+                                                 r_loc);
           }
 
           if (!skip_selected || !(is_selected_h2 || (is_autoalign_h2 && is_selected_h1))) {
             has_snap |= test_projected_vert_dist(&neasrest_precalc,
-                                                  clip_planes_local,
-                                                  clip_plane_len,
-                                                  is_persp,
-                                                  nu->bezt[u].vec[2],
-                                                  &dist_px_sq,
-                                                  r_loc);
+                                                 clip_planes_local,
+                                                 clip_plane_len,
+                                                 is_persp,
+                                                 nu->bezt[u].vec[2],
+                                                 &dist_px_sq,
+                                                 r_loc);
           }
         }
         has_snap |= test_projected_vert_dist(&neasrest_precalc,
-                                              clip_planes_local,
-                                              clip_plane_len,
-                                              is_persp,
-                                              nu->bezt[u].vec[1],
-                                              &dist_px_sq,
-                                              r_loc);
+                                             clip_planes_local,
+                                             clip_plane_len,
+                                             is_persp,
+                                             nu->bezt[u].vec[1],
+                                             &dist_px_sq,
+                                             r_loc);
       }
     }
     else if (nu->bp) {
@@ -2429,7 +2429,7 @@ static eSnapMode snapCamera(const SnapObjectContext *sctx,
 
     LISTBASE_FOREACH (MovieTrackingObject *, tracking_object, &tracking->objects) {
       float reconstructed_camera_mat[4][4], reconstructed_camera_imat[4][4];
-      const float(*vertex_obmat)[4];
+      const float (*vertex_obmat)[4];
 
       if ((tracking_object->flag & TRACKING_OBJECT_CAMERA) == 0) {
         BKE_tracking_camera_get_reconstructed_interpolate(
@@ -2756,7 +2756,7 @@ static eSnapMode snapEditMesh(SnapObjectContext *sctx,
   float tobmat[4][4], clip_planes_local[MAX_CLIPPLANE_LEN][4];
   transpose_m4_m4(tobmat, obmat);
 
-  float(*clip_planes)[4] = sctx->runtime.clip_plane;
+  float (*clip_planes)[4] = sctx->runtime.clip_plane;
   int clip_plane_len = sctx->runtime.clip_plane_len;
 
   if (sctx->runtime.has_occlusion_plane && XRAY_FLAG_ENABLED(sctx->runtime.v3d)) {

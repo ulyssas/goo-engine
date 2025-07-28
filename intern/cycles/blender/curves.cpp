@@ -700,6 +700,9 @@ static void attr_create_motion(Hair *hair, BL::Attribute &b_attribute, const flo
   const float(*src)[3] = static_cast<const float(*)[3]>(b_vector_attribute.data[0].ptr.data);
   const int num_curve_keys = hair->get_curve_keys().size();
 
+  /* Override motion steps to fixed number. */
+  hair->set_motion_steps(3);
+
   /* Find or add attribute */
   float3 *P = &hair->get_curve_keys()[0];
   Attribute *attr_mP = hair->attributes.find(ATTR_STD_MOTION_VERTEX_POSITION);
@@ -1007,8 +1010,9 @@ static void export_hair_curves_motion(Hair *hair, BL::Curves b_curves, int motio
   }
 
   /* Export motion keys. */
-  const int num_keys = hair->get_curve_keys().size();
-  const int num_curves = b_curves.curves.length();
+  const int num_keys = hair->num_keys();
+  const int num_motion_curves = b_curves.curves.length();
+  const int num_curves = hair->num_curves();
   float4 *mP = attr_mP->data_float4() + motion_step * num_keys;
   bool have_motion = false;
   int num_motion_keys = 0;
@@ -1018,7 +1022,11 @@ static void export_hair_curves_motion(Hair *hair, BL::Curves b_curves, int motio
   const float(*b_attr_position)[3] = find_position_attribute(b_curves);
   const float *b_attr_radius = find_radius_attribute(b_curves);
 
-  for (int i = 0; i < num_curves; i++) {
+  for (int i = 0; i < num_motion_curves; i++) {
+    if (curve_index >= num_curves) {
+      break;
+    }
+
     const int first_point_index = point_offsets[i];
     const int num_points = point_offsets[i + 1] - first_point_index;
 

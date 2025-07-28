@@ -864,14 +864,39 @@ if(WITH_CYCLES_DEVICE_ONEAPI)
 
   # Set defaults for spir64 and spir64_gen options
   if(NOT DEFINED CYCLES_ONEAPI_SYCL_OPTIONS_spir64)
-    set(CYCLES_ONEAPI_SYCL_OPTIONS_spir64 "-options '-ze-opt-regular-grf-kernel integrator_intersect -ze-opt-large-grf-kernel shade -ze-opt-no-local-to-generic'")
+    set(CYCLES_ONEAPI_SYCL_OPTIONS_spir64 "-options '-ze-opt-large-register-file -ze-opt-regular-grf-kernel integrator_intersect -ze-opt-large-grf-kernel shade -ze-opt-no-local-to-generic'")
   endif()
   if(NOT DEFINED CYCLES_ONEAPI_SYCL_OPTIONS_spir64_gen)
     set(CYCLES_ONEAPI_SYCL_OPTIONS_spir64_gen "${CYCLES_ONEAPI_SYCL_OPTIONS_spir64}" CACHE STRING "Extra build options for spir64_gen target")
   endif()
   # Enable zebin, a graphics binary format with improved compatibility.
   string(PREPEND CYCLES_ONEAPI_SYCL_OPTIONS_spir64_gen "--format zebin ")
-  string(PREPEND CYCLES_ONEAPI_SYCL_OPTIONS_spir64_gen "-device ${CYCLES_ONEAPI_SPIR64_GEN_DEVICES} ")
+
+  # Add the list of Intel devices to build binaries for.
+  foreach(device ${CYCLES_ONEAPI_SPIR64_GEN_DEVICES})
+    # Run ocloc ids to test if the device is supported.
+    if(WIN32)
+      execute_process(COMMAND ${OCLOC_INSTALL_DIR}/ocloc.exe ids ${device}
+                      RESULT_VARIABLE oclocids_ret
+                      OUTPUT_QUIET
+                      ERROR_QUIET)
+    else()
+      execute_process(COMMAND ${CMAKE_COMMAND}
+                              -E env "LD_LIBRARY_PATH=${OCLOC_INSTALL_DIR}/lib:${IGC_INSTALL_DIR}/lib"
+                              ${OCLOC_INSTALL_DIR}/bin/ocloc ids ${device}
+                      RESULT_VARIABLE oclocids_ret
+                      OUTPUT_QUIET
+                      ERROR_QUIET)
+    endif()
+    if(NOT oclocids_ret EQUAL 0)
+      list(REMOVE_ITEM CYCLES_ONEAPI_SPIR64_GEN_DEVICES ${device})
+      message(STATUS "binaries for ${device} not supported by Intel Graphics Compiler/ocloc, skipped.")
+    endif()
+  endforeach()
+  list(JOIN CYCLES_ONEAPI_SPIR64_GEN_DEVICES "," gen_devices_string)
+  if(NOT "${gen_devices_string}" STREQUAL "")
+    string(PREPEND CYCLES_ONEAPI_SYCL_OPTIONS_spir64_gen "-device ${gen_devices_string} ")
+  endif()
 
   # Host execution won't use GPU binaries, no need to compile them.
   if(WITH_CYCLES_ONEAPI_BINARIES AND NOT WITH_CYCLES_ONEAPI_HOST_TASK_EXECUTION)

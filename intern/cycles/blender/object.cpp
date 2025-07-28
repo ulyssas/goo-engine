@@ -131,7 +131,12 @@ void BlenderSync::sync_object_motion_init(BL::Object &b_parent, BL::Object &b_ob
   }
 
   geom->set_use_motion_blur(use_motion_blur);
-  geom->set_motion_steps(motion_steps);
+
+  if (!geom->has_motion_blur()) {
+    /* Only set motion steps if geometry doesn't already have
+     * motion blur from a velocity attribute. */
+    geom->set_motion_steps(motion_steps);
+  }
 
   motion.resize(motion_steps, transform_empty());
 
@@ -307,6 +312,8 @@ Object *BlenderSync::sync_object(BL::Depsgraph &b_depsgraph,
 
   bool is_caustics_receiver = get_boolean(cobject, "is_caustics_receiver");
   object->set_is_caustics_receiver(is_caustics_receiver);
+
+  object->set_is_bake_target(b_ob_info.real_object == b_bake_target);
 
   /* sync the asset name for Cryptomatte */
   BL::Object parent = b_ob.parent();
